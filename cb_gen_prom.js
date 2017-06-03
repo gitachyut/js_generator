@@ -1,6 +1,23 @@
+function runGenerator(g) {
+    var it = g(), ret;
+    (function iterate(val){
+        ret = it.next( val );
+        if (!ret.done) {
+            if ("then" in ret.value) {
+                ret.value.then( iterate );
+            }
+            else {
+                setTimeout( function(){
+                    iterate( ret.value );
+                }, 0 );
+            }
+        }
+    })();
+}
+
 var myProm = new Promise(resolve=>{
   setTimeout(()=>{
-    resolve('Testing Testing')
+    resolve('Testing')
   },1000)
 })
 
@@ -19,19 +36,10 @@ var xhr = function(func){
   }
   x.send()
 }
-function* Gen(){
+
+runGenerator(function* Gen(){
   var x = yield myProm
   var t = yield oneMore(x)
   var c = yield xhr
   console.log(t)
-}
-var gen = Gen();
-var d = gen.next().value
-        .then( (res)=> gen.next(res).value)
-        .then( (res)=> {
-             gen.next(res).value(function(res){
-               console.log(res)
-             })
-             gen.next()
-        })
-        .catch( (err)=> console.log(err) )
+})
